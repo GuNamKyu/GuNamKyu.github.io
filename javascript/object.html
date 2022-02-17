@@ -1,0 +1,88 @@
+<html>
+    <script>
+//  let grades = {'egoing': 10, 'k8805': 6, 'sorialgi': 80};
+// egoing 은 key, 10 은 value
+/*  let grades = {};
+    grades['egoing'] = 10;
+    grades['k8805'] = 6;
+    grades['sorialgi'] = 80;
+*/
+
+/*  let grades = new Object();
+    grades['egoing'] = 10;
+    grades['k8805'] = 6;
+    grades['sorialgi'] = 80;
+*/
+
+// grades['egoing']
+// grades['ego'+'ing']
+
+/*let grades = {'egoing': 10, 'k8805': 6, 'sorialgi': 80};
+for(key in grades) {
+    document.write("key : "+key+" value : "+grades[key]+"<br />");
+}
+*/
+// 변수 grades의 key를 for문이 반복할 때 마다 하나씩 가져와서 변수 key에 담는다.
+// grades[key]는 객체 grades에 담긴 key의 값(10,6,80)을 의미한다.
+
+/*
+let grades = {'egoing': 10, 'k8805': 6, 'sorialgi': 80};
+for(let name in grades) {
+    document.write("<li>key : "+name+" value : "+grades[name]+"</li>");
+}
+*/
+
+/*
+let grades = {
+    'list' : {'egoing' : 10, 'k8805' : 8, 'sorialgi' : 80}
+}
+alert(grades['list']['egoing']);
+*/
+
+/*
+let grades = {
+    'list' : {'egoing' : 10, 'k8805' : 8, 'sorialgi' : 80}
+    'show' : function(){
+        alert('Hello world');
+    }
+}
+grades['show']();
+*/
+
+/*
+let grades = {
+    'list' : {'egoing' : 10, 'k8805' : 8, 'sorialgi' : 80}
+    'show' : function(){
+        alert(this.list);
+    }
+}
+grades[show]();
+*/
+
+class Grades {
+    constructor() {
+        this.list = {'egoing' : 10, 'k8805' : 8, 'sorialgi' : 80}
+    }
+
+    show() {
+        for (let name in this.list) {
+            console.log(name, this.list[name]);
+        }
+    }
+}
+
+let grades = {
+    'list' : {'egoing' : 10, 'k8805' : 8, 'sorialgi' : 80},
+    'show' : function(){
+        for(var name in this.list){
+            console.log(name, this.list[name]);
+        }
+    }
+}
+grades['show']();
+
+// this는 함수가 속해있는 객체를 가리키는 변수
+// 객체지향 프로그래밍 = 그룹화
+    </script>
+</html>
+
