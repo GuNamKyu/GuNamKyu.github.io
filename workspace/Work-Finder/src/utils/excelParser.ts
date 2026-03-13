@@ -69,16 +69,20 @@ export const parseExcelFile = async (file: File): Promise<OrganizationInfo[]> =>
           let url = row[urlColIdx]?.toString().trim();
 
           if (orgName && url) {
-            // Ensure URL has http protocol
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
-              url = `http://${url}`;
-            }
+            // Check if it's a valid link (not just "-", "없음" etc.)
+            // A simple check is that it should contain '.' or 'http'
+            if (url.includes('.') || url.includes('http')) {
+              // Ensure URL has http protocol
+              if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = `http://${url}`;
+              }
 
-            orgs.push({
-              id: `${i}-${orgName.substring(0, 10)}`,
-              orgName,
-              url
-            });
+              orgs.push({
+                id: `${i}-${orgName.substring(0, 10)}`,
+                orgName,
+                url
+              });
+            }
           }
         }
 

@@ -61,35 +61,64 @@ export const scrapeWebsite = async (url: string): Promise<ScrapeResult> => {
 
     const pageText = doc.body ? doc.body.innerText : '';
     
-    // 1. Check if any keyword exists
-    let hasKeyword = false;
+    // 1. Check globally first to save processing time
+    let hasGlobalKeyword = false;
     for (const kw of KEYWORDS) {
       if (pageText.includes(kw)) {
-        hasKeyword = true;
+        hasGlobalKeyword = true;
         break;
       }
     }
 
-    if (!hasKeyword) {
+    // Also check for '채용중' specially as requested
+    if (!hasGlobalKeyword && pageText.includes('채용중')) {
+        hasGlobalKeyword = true;
+    }
+
+    if (!hasGlobalKeyword) {
       return { hasKeyword: false, latestDate: null };
     }
 
-    // 2. Find all matching dates
-    let match;
+    // 2. Process text line by line with a sliding window
+    const lines = pageText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const EXCLUDE_WORDS = ['합격', '결과', '마감', '취소'];
+    const EXTENDED_KEYWORDS = [...KEYWORDS, '채용중'];
+    
     const foundDates: Date[] = [];
+    const now = new Date();
     
-    // Reset regex index
-    DATE_REGEX.lastIndex = 0;
-    
-    while ((match = DATE_REGEX.exec(pageText)) !== null) {
-      const parsedD = parseDateSegments(match[1], match[2], match[3]);
-      if (parsedD && parsedD > new Date(2000, 0, 1) && parsedD <= new Date(2100, 0, 1)) {
-        foundDates.push(parsedD);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      let match;
+      
+      // Look for dates only in the current line
+      DATE_REGEX.lastIndex = 0;
+      
+      while ((match = DATE_REGEX.exec(line)) !== null) {
+        const parsedD = parseDateSegments(match[1], match[2], match[3]);
+        if (parsedD && parsedD > new Date(2000, 0, 1) && parsedD <= new Date(2100, 0, 1)) {
+          // Check context in a 3-line window
+          const windowText = lines.slice(Math.max(0, i - 1), Math.min(lines.length, i + 2)).join(' ');
+          
+          const windowHasKeyword = EXTENDED_KEYWORDS.some(kw => windowText.includes(kw));
+          const windowHasExclude = EXCLUDE_WORDS.some(kw => windowText.includes(kw));
+          
+          if (windowHasKeyword && !windowHasExclude) {
+            // Filter by date (within 30 days)
+            const diffTime = now.getTime() - parsedD.getTime();
+            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            
+            // Math.abs handles both past (-30 days) and potential future (+30 days) deadlines
+            if (Math.abs(diffDays) <= 30) {
+              foundDates.push(parsedD);
+            }
+          }
+        }
       }
     }
 
     if (foundDates.length === 0) {
-      return { hasKeyword: true, latestDate: null }; // Found keywords but no date
+      return { hasKeyword: false, latestDate: null }; 
     }
 
     // Sort descending
