@@ -58,7 +58,8 @@ export const parseExcelFile = async (file: File): Promise<OrganizationInfo[]> =>
 
         // If we couldn't confidently find headers, assume column 0 is name and column 1 is url for simplicity
         if (nameColIdx === -1) nameColIdx = 0;
-        if (urlColIdx === -1) urlColIdx = 1;
+        // It's possible there is no URL column, but instead links are embedded in the name column
+        // We will handle this case during extraction
 
         // Extract data
         for (let i = headerRowIdx + 1; i < rows.length; i++) {
@@ -66,7 +67,22 @@ export const parseExcelFile = async (file: File): Promise<OrganizationInfo[]> =>
           if (!row || !Array.isArray(row)) continue;
 
           const orgName = row[nameColIdx]?.toString().trim();
-          let url = row[urlColIdx]?.toString().trim();
+          let url = '';
+          
+          if (urlColIdx !== -1 && row[urlColIdx]) {
+              url = row[urlColIdx].toString().trim();
+          }
+
+          // If URL is still empty, try to find an embedded hyperlink in the orgName cell (or any cell in that row)
+          if (!url && orgName) {
+              // Try to find the cell address for the current row and name column
+              const cellAddress = XLSX.utils.encode_cell({ r: i, c: nameColIdx });
+              const cell = worksheet[cellAddress];
+              
+              if (cell && cell.l && cell.l.Target) {
+                  url = cell.l.Target.toString().trim();
+              }
+          }
 
           if (orgName && url) {
             // Check if it's a valid link (not just "-", "없음" etc.)
